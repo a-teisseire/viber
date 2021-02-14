@@ -1,6 +1,9 @@
 package viber
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 // User struct as part of UserDetails
 type User struct {
@@ -41,7 +44,7 @@ type UserOnline struct {
 }
 
 // UserDetails of user id
-func (v *Viber) UserDetails(id string) (UserDetails, error) {
+func (v *Viber) UserDetails(ctx context.Context, id string) (UserDetails, error) {
 	/*
 				b := []byte(`{
 				"status": 0,
@@ -73,7 +76,7 @@ func (v *Viber) UserDetails(id string) (UserDetails, error) {
 		ID: id,
 	}
 
-	b, err := v.PostData("https://chatapi.viber.com/pa/get_user_details", s)
+	b, err := v.PostData(ctx, "https://chatapi.viber.com/pa/get_user_details", s)
 	if err != nil {
 		return u, err
 	}
@@ -92,14 +95,14 @@ func (v *Viber) UserDetails(id string) (UserDetails, error) {
 }
 
 // UserOnline status
-func (v *Viber) UserOnline(ids []string) ([]UserOnline, error) {
+func (v *Viber) UserOnline(ctx context.Context, ids []string) ([]UserOnline, error) {
 	var uo online
 	req := struct {
 		IDs []string `json:"ids"`
 	}{
 		IDs: ids,
 	}
-	b, err := v.PostData("https://chatapi.viber.com/pa/get_online", req)
+	b, err := v.PostData(ctx, "https://chatapi.viber.com/pa/get_online", req)
 	if err != nil {
 		return []UserOnline{}, err
 	}

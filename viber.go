@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -43,6 +42,7 @@ type event struct {
 type Viber struct {
 	AppKey string
 	Sender Sender
+	Logger Logger
 
 	// event methods
 	ConversationStarted func(v *Viber, u User, conversationType, context string, subscribed bool, token uint64, t time.Time) Message
@@ -58,13 +58,11 @@ type Viber struct {
 }
 
 var (
-	// Log errors, set to logger if you want to log package activities and errors
-	Log               = log.New(ioutil.Discard, "Viber >>", 0)
 	regexpPeekMsgType = regexp.MustCompile("\"type\":\\s*\"([^\"]+)\"")
 )
 
 // New returns Viber app with specified app key and default sender
-// You can also create *VIber{} struct directly
+// You can also create *Viber{} struct directly
 func New(appKey, senderName, senderAvatar string) *Viber {
 	return &Viber{
 		AppKey: appKey,
@@ -72,6 +70,7 @@ func New(appKey, senderName, senderAvatar string) *Viber {
 			Name:   senderName,
 			Avatar: senderAvatar,
 		},
+		Logger: NewDefaultLogger(ioutil.Discard),
 		client: &http.Client{},
 	}
 }
@@ -79,24 +78,23 @@ func New(appKey, senderName, senderAvatar string) *Viber {
 // ServeHTTP
 // https://developers.viber.com/docs/api/rest-bot-api/#callbacks
 func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	body, err := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
-		Log.Println(err)
+		v.Logger.Error("couldn't read request body")
 		return
 	}
 
-	Log.Println("Received from Viber:", string(body))
+	v.Logger.Debug("received from Viber: %s", string(body))
 
 	if !v.checkHMAC(body, r.Header.Get("X-Viber-Content-Signature")) {
-		Log.Println("X-Viber-Content-Signature doesn't match")
+		v.Logger.Error("X-Viber-Content-Signature doesn't match")
 		return
 	}
 
 	var e event
 	if err := json.Unmarshal(body, &e); err != nil {
-		Log.Println(err)
+		v.Logger.Error("couldn't unmarshal response: %w", err)
 		return
 	}
 
@@ -105,7 +103,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if v.Subscribed != nil {
 			var u User
 			if err := json.Unmarshal(e.User, &u); err != nil {
-				Log.Println(err)
+				v.Logger.Error("couldn't unmarshal user from 'subscribed' event: %w", err)
 				return
 			}
 			go v.Subscribed(v, u, e.MessageToken, e.Timestamp.Time)
@@ -120,7 +118,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if v.ConversationStarted != nil {
 			var u User
 			if err := json.Unmarshal(e.User, &u); err != nil {
-				Log.Println(err)
+				v.Logger.Error("couldn't unmarshal user from 'conversation_started' event: %w", err)
 				return
 			}
 			if msg := v.ConversationStarted(v, u, e.Type, e.Context, e.Subscribed, e.MessageToken, e.Timestamp.Time); msg != nil {
@@ -150,16 +148,16 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if v.Message != nil {
 			var u User
 			if err := json.Unmarshal(e.Sender, &u); err != nil {
-				Log.Println(err)
+				v.Logger.Error("couldn't unmarshal sender from 'message' event: %w", err)
 				return
 			}
 
-			msgType := peakMessageType(e.Message)
+			msgType := peekMessageType(e.Message)
 			switch msgType {
 			case "text":
 				var m TextMessage
 				if err := json.Unmarshal(e.Message, &m); err != nil {
-					Log.Println(err)
+					v.Logger.Error("couldn't unmarshal message '%s' from 'message' event: %w", msgType, err)
 					return
 				}
 				go v.Message(v, u, &m, e.MessageToken, e.Timestamp.Time)
@@ -167,7 +165,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "picture":
 				var m PictureMessage
 				if err := json.Unmarshal(e.Message, &m); err != nil {
-					Log.Println(err)
+					v.Logger.Error("couldn't unmarshal message '%s' from 'message' event: %w", msgType, err)
 					return
 				}
 				go v.Message(v, u, &m, e.MessageToken, e.Timestamp.Time)
@@ -175,7 +173,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "video":
 				var m VideoMessage
 				if err := json.Unmarshal(e.Message, &m); err != nil {
-					Log.Println(err)
+					v.Logger.Error("couldn't unmarshal message '%s' from 'message' event: %w", msgType, err)
 					return
 				}
 				go v.Message(v, u, &m, e.MessageToken, e.Timestamp.Time)
@@ -183,7 +181,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "url":
 				var m URLMessage
 				if err := json.Unmarshal(e.Message, &m); err != nil {
-					Log.Println(err)
+					v.Logger.Error("couldn't unmarshal message '%s' from 'message' event: %w", msgType, err)
 					return
 				}
 				go v.Message(v, u, &m, e.MessageToken, e.Timestamp.Time)
@@ -193,6 +191,7 @@ func (v *Viber) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "location":
 				// TODO
 			default:
+				v.Logger.Error("unknown message type '%s' from 'message' event: %w", msgType, err)
 				return
 			}
 		}
@@ -206,8 +205,8 @@ func (v *Viber) checkHMAC(message []byte, messageMAC string) bool {
 	return messageMAC == hex.EncodeToString(hmac.Sum(nil))
 }
 
-// peakMessageType uses regexp to determin message type for unmarshaling
-func peakMessageType(b []byte) string {
+// peekMessageType uses regexp to determin message type for unmarshaling
+func peekMessageType(b []byte) string {
 	matches := regexpPeekMsgType.FindAllSubmatch(b, -1)
 	if len(matches) == 0 {
 		return ""

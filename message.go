@@ -1,20 +1,9 @@
 package viber
 
-import "encoding/json"
-
-/*
-{
-	"receiver": "01234567890A=",
-	"min_api_version": 1,
-	"sender": {
-		"name": "John McClane",
-		"avatar": "http://avatar.example.com"
-	},
-	"tracking_data": "tracking data",
-	"type": "text",
-	"text": "a message from pa"
-}
-*/
+import (
+	"context"
+	"encoding/json"
+)
 
 type messageResponse struct {
 	Status        int    `json:"status"`
@@ -98,8 +87,8 @@ func parseMsgResponse(b []byte) (msgToken uint64, err error) {
 	return resp.MessageToken, nil
 }
 
-func (v *Viber) sendMessage(url string, m interface{}) (msgToken uint64, err error) {
-	b, err := v.PostData(url, m)
+func (v *Viber) sendMessage(ctx context.Context, url string, m interface{}) (msgToken uint64, err error) {
+	b, err := v.PostData(ctx, url, m)
 	if err != nil {
 		return 0, err
 	}
@@ -141,31 +130,31 @@ func (v *Viber) NewPictureMessage(msg string, url string, thumbURL string) *Pict
 }
 
 // SendTextMessage to reciever, returns message token
-func (v *Viber) SendTextMessage(receiver string, msg string) (msgToken uint64, err error) {
-	return v.SendMessage(receiver, v.NewTextMessage(msg))
+func (v *Viber) SendTextMessage(ctx context.Context, receiver string, msg string) (msgToken uint64, err error) {
+	return v.SendMessage(ctx, receiver, v.NewTextMessage(msg))
 }
 
 // SendURLMessage to easily send url messages as global sender
-func (v *Viber) SendURLMessage(receiver string, msg string, url string) (msgToken uint64, err error) {
-	return v.SendMessage(receiver, v.NewURLMessage(msg, url))
+func (v *Viber) SendURLMessage(ctx context.Context, receiver string, msg string, url string) (msgToken uint64, err error) {
+	return v.SendMessage(ctx, receiver, v.NewURLMessage(msg, url))
 }
 
 // SendPictureMessage to receiver, returns message token
-func (v *Viber) SendPictureMessage(receiver string, msg string, url string, thumbURL string) (token uint64, err error) {
-	return v.SendMessage(receiver, v.NewPictureMessage(msg, url, thumbURL))
+func (v *Viber) SendPictureMessage(ctx context.Context, receiver string, msg string, url string, thumbURL string) (token uint64, err error) {
+	return v.SendMessage(ctx, receiver, v.NewPictureMessage(msg, url, thumbURL))
 }
 
 // SendPublicMessage from public account
-func (v *Viber) SendPublicMessage(from string, m Message) (msgToken uint64, err error) {
+func (v *Viber) SendPublicMessage(ctx context.Context, from string, m Message) (msgToken uint64, err error) {
 	// text, picture, video, file, location, contact, sticker and url
 	m.SetFrom(from)
-	return v.sendMessage("https://chatapi.viber.com/pa/post", m)
+	return v.sendMessage(ctx, "https://chatapi.viber.com/pa/post", m)
 }
 
 // SendMessage to receiver
-func (v *Viber) SendMessage(to string, m Message) (msgToken uint64, err error) {
+func (v *Viber) SendMessage(ctx context.Context, to string, m Message) (msgToken uint64, err error) {
 	m.SetReceiver(to)
-	return v.sendMessage("https://chatapi.viber.com/pa/send_message", m)
+	return v.sendMessage(ctx, "https://chatapi.viber.com/pa/send_message", m)
 }
 
 // SetReceiver for text message
