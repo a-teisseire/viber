@@ -1,3 +1,3 @@
-module github.com/mileusna/viber
+module github.com/a-teisseire/viber
 
 go 1.14

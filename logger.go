@@ -25,18 +25,18 @@ type defaultLogger struct {
 	logger *log.Logger
 }
 
-func (l defaultLogger) Debug(format string, params ...interface{}) {
+func (l *defaultLogger) Debug(format string, params ...interface{}) {
 	l.logger.Printf(fmt.Sprintf("[D] %s", format), params...)
 }
 
-func (l defaultLogger) Info(format string, params ...interface{}) {
+func (l *defaultLogger) Info(format string, params ...interface{}) {
 	l.logger.Printf(fmt.Sprintf("[I] %s", format), params...)
 }
 
-func (l defaultLogger) Warn(format string, params ...interface{}) {
+func (l *defaultLogger) Warn(format string, params ...interface{}) {
 	l.logger.Printf(fmt.Sprintf("[W] %s", format), params...)
 }
 
-func (l defaultLogger) Error(format string, params ...interface{}) {
+func (l *defaultLogger) Error(format string, params ...interface{}) {
 	l.logger.Printf(fmt.Sprintf("[E] %s", format), params...)
 }
