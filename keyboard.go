@@ -2,10 +2,12 @@ package viber
 
 // Keyboard struct
 type Keyboard struct {
-	Type          string   `json:"Type"`
-	DefaultHeight bool     `json:"DefaultHeight,omitempty"`
-	BgColor       string   `json:"BgColor,omitempty"`
-	Buttons       []Button `json:"Buttons"`
+	Type                string   `json:"Type"`
+	DefaultHeight       bool     `json:"DefaultHeight,omitempty"`
+	CustomDefaultHeight int      `json:"CustomDefaultHeight,omitempty"`
+	HeightScale         int      `json:"HeightScale,omitempty"`
+	BgColor             string   `json:"BgColor,omitempty"`
+	Buttons             []Button `json:"Buttons"`
 }
 
 // AddButton to keyboard

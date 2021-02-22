@@ -12,12 +12,20 @@ type Button struct {
 	TextVAlign          TextVAlign `json:"TextVAlign,omitempty"`
 	TextHAlign          TextHAlign `json:"TextHAlign,omitempty"`
 	TextOpacity         int8       `json:"TextOpacity,omitempty"`
+	TextPaddings        []int8     `json:"TextPaddings,omitempty"`
 	TextBgGradientColor string     `json:"TextBgGradientColor,omitempty"`
 	BgColor             string     `json:"BgColor,omitempty"`
 	BgMediaType         string     `json:"BgMediaType,omitempty"`
 	BgMedia             string     `json:"BgMedia,omitempty"`
 	BgLoop              bool       `json:"BgLoop,omitempty"`
 	Silent              bool       `json:"Silent,omitempty"`
+	Frame               *Frame     `json:"Frame,omitempty"`
+}
+
+type Frame struct {
+	BorderWidth  int    `json:"BorderWidth,omitempty"`
+	BorderColor  string `json:"BorderColor,omitempty"`
+	CornerRadius int    `json:"CornerRadius,omitempty"`
 }
 
 // NewButton helper function for creating button with text and image
