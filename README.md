@@ -1,4 +1,4 @@
-# Go/Golang package for Viber messaging and chatbot [![GoDoc](https://godoc.org/github.com/mileusna/viber?status.svg)](https://godoc.org/github.com/mileusna/viber)
+# Go/Golang package for Viber messaging and chatbot [![GoDoc](https://godoc.org/github.com/alex-telpis/viber?status.svg)](https://godoc.org/github.com/alex-telpis/viber)
 
 With this package you can use [Viber REST API](https://developers.viber.com/docs/api/rest-bot-api/) to send and receive messages from Viber platform.
 
@@ -18,19 +18,19 @@ Before using this package you will need [Viber public account](https://support.v
 
 ## Installation <a id="installation"></a>
 ```
-go get github.com/mileusna/viber
+go get github.com/alex-telpis/viber
 ```
 
 ## Hello World example<a id="helloworld"></a>
 
 ```go
-package main 
+package main
 
 import (
     "fmt"
     "log"
 
-    "github.com/mileusna/viber"
+    "github.com/alex-telpis/viber"
 )
 
 func main() {
@@ -157,7 +157,7 @@ import (
     "net/http"
     "time"
 
-    "github.com/mileusna/viber"
+    "github.com/alex-telpis/viber"
 )
 
 func main() {
@@ -171,7 +171,7 @@ func main() {
         Delivered: myDeliveredFunc,    // your function for delivery report
     }
     v.Seen = mySeenFunc   // or assign events after declaration
-    
+
     // this have to be your webhook, pass it your viber app as http handler
     http.Handle("/viber/webhook/", v)
     http.ListenAndServe(":80", nil)    
@@ -212,5 +212,5 @@ func mySeenFunc(v *viber.Viber, userID string, token uint64, t time.Time) {
 // Unsubscribed        func(v *Viber, userID string, token uint64, t time.Time)
 // Delivered           func(v *Viber, userID string, token uint64, t time.Time)
 // Seen                func(v *Viber, userID string, token uint64, t time.Time)
-// Failed              func(v *Viber, userID string, token uint64, descr string, t time.Time) 
+// Failed              func(v *Viber, userID string, token uint64, descr string, t time.Time)
 ```
