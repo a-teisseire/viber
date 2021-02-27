@@ -3,6 +3,7 @@ package viber
 import (
 	"context"
 	"encoding/json"
+	"errors"
 )
 
 //
@@ -60,5 +61,13 @@ func (v *Viber) SetWebhook(ctx context.Context, url string, eventTypes []string)
 	}
 
 	err = json.Unmarshal(r, &resp)
-	return resp, err
+	if err != nil {
+		return resp, err
+	}
+
+	if resp.Status != 0 {
+		return resp, errors.New("non-zero status: " + resp.StatusMessage)
+	}
+
+	return resp, nil
 }
