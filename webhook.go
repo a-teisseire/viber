@@ -16,6 +16,8 @@ import (
 type WebhookReq struct {
 	URL        string   `json:"url"`
 	EventTypes []string `json:"event_types"`
+	SendName   bool     `json:"send_name"`
+	SendPhoto  bool     `json:"send_photo"`
 }
 
 // {
@@ -49,6 +51,8 @@ func (v *Viber) SetWebhook(ctx context.Context, url string, eventTypes []string)
 	req := WebhookReq{
 		URL:        url,
 		EventTypes: eventTypes,
+		SendName:   true,
+		SendPhoto:  true,
 	}
 	r, err := v.PostData(ctx, "https://chatapi.viber.com/pa/set_webhook", req)
 	if err != nil {
