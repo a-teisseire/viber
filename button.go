@@ -14,6 +14,7 @@ type Button struct {
 	TextOpacity         int8       `json:"TextOpacity,omitempty"`
 	TextPaddings        []int8     `json:"TextPaddings,omitempty"`
 	TextBgGradientColor string     `json:"TextBgGradientColor,omitempty"`
+	TextShouldFit       bool       `json:"TextShouldFit,omitempty"`
 	BgColor             string     `json:"BgColor,omitempty"`
 	BgMediaType         string     `json:"BgMediaType,omitempty"`
 	BgMedia             string     `json:"BgMedia,omitempty"`
